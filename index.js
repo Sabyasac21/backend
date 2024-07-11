@@ -13,7 +13,7 @@ app.use(cors());
 
 //  Database Connection with mongoDB
 mongoose.connect(
-  "mongodb+srv://sabyasachigolu:saby1234@cluster0.1r1pbez.mongodb.net/"
+  "mongodb+srv://sabyasachigolu:saby1234@cluster0.1r1pbez.mongodb.net/E-commerce"
   
 );
 
