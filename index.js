@@ -1,6 +1,7 @@
-const port = 4000;
+const port = process.env.PORT || 4000;
 const express = require("express");
 const app = express();
+const fs = require("fs");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
@@ -8,14 +9,24 @@ const path = require("path");
 const cors = require("cors");
 // const { type } = require("os");
 
+const mongoUri =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://sabyasachigolu:saby1234@cluster0.1r1pbez.mongodb.net/E-commerce";
+const backendUrl = process.env.BACKEND_URL || "https://backend-ovfj.onrender.com";
+const uploadDir = path.join(__dirname, "upload", "images");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 app.use(express.json());
 app.use(cors());
 
 //  Database Connection with mongoDB
-mongoose.connect(
-  "mongodb+srv://sabyasachigolu:saby1234@cluster0.1r1pbez.mongodb.net/E-commerce"
-  
-);
+mongoose
+  .connect(mongoUri)
+  .then(() => console.log("MongoDB connected"))
+  .catch((error) => console.error("MongoDB connection error:", error));
 
 // API creation
 
@@ -26,7 +37,7 @@ app.get("/", (req, res) => {
 // Image Storage Engine
 
 const storage = multer.diskStorage({
-  destination: "./upload/images",
+  destination: uploadDir,
   filename: (req, file, cb) => {
     return cb(
       null,
@@ -39,10 +50,27 @@ const upload = multer({ storage: storage });
 
 // upload Endpoint for images
 app.use("/images", express.static("upload/images"));
-app.post("/upload", upload.single("product"), (req, res) => {
-  res.json({
-    success: 1,
-    image_url: `https://backend-ovfj.onrender.com/images/${req.file.filename}`,
+app.post("/upload", (req, res) => {
+  upload.single("product")(req, res, (error) => {
+    if (error) {
+      console.error("Upload error:", error);
+      return res.status(500).json({
+        success: 0,
+        error: "Image upload failed",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: 0,
+        error: "No image file received",
+      });
+    }
+
+    res.json({
+      success: 1,
+      image_url: `${backendUrl}/images/${req.file.filename}`,
+    });
   });
 });
 
