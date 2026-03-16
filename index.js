@@ -9,9 +9,7 @@ const path = require("path");
 const cors = require("cors");
 // const { type } = require("os");
 
-const mongoUri =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://sabyasachigolu:saby1234@cluster0.1r1pbez.mongodb.net/E-commerce";
+const mongoUri = process.env.MONGODB_URI;
 const backendUrl = process.env.BACKEND_URL || "https://backend-ovfj.onrender.com";
 const uploadDir = path.join(__dirname, "upload", "images");
 
@@ -34,11 +32,14 @@ const ensureDatabaseConnection = (res) => {
   return true;
 };
 
-//  Database Connection with mongoDB
-mongoose
-  .connect(mongoUri)
-  .then(() => console.log("MongoDB connected"))
-  .catch((error) => console.error("MongoDB connection error:", error));
+const connectToDatabase = async () => {
+  if (!mongoUri) {
+    throw new Error("MONGODB_URI is not set");
+  }
+
+  await mongoose.connect(mongoUri);
+  console.log("MongoDB connected");
+};
 
 // API creation
 
@@ -359,10 +360,16 @@ app.post('/getcart', fetchUser, async(req, res)=>{
   res.json(userData.cartData)
 })
 
-app.listen(port, (err) => {
-  if (!err) {
-    console.log("Server running on port " + port);
-  } else {
-    console.log("error :" + err);
+const startServer = async () => {
+  try {
+    await connectToDatabase();
+    app.listen(port, () => {
+      console.log("Server running on port " + port);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
   }
-});
+};
+
+startServer();
