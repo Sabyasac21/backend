@@ -89,7 +89,9 @@ app.post("/upload", (req, res) => {
 });
 
 // Schema for Creating Products
-const Product = mongoose.model("Product", {
+const Product =
+  mongoose.models.Product ||
+  mongoose.model("Product", {
   id: {
     type: Number,
     required: true,
