@@ -341,6 +341,48 @@ app.post("/seedproducts", async (req, res) => {
   }
 });
 
+app.post("/fix-product-images", async (req, res) => {
+  if (!ensureDatabaseConnection(res)) {
+    return;
+  }
+
+  try {
+    const localhostPrefixes = [
+      "http://localhost:4000/images/",
+      "https://localhost:4000/images/",
+    ];
+
+    const products = await Product.find({});
+    let updatedCount = 0;
+
+    for (const product of products) {
+      const matchedPrefix = localhostPrefixes.find((prefix) =>
+        product.image.startsWith(prefix)
+      );
+
+      if (!matchedPrefix) {
+        continue;
+      }
+
+      const filename = product.image.slice(matchedPrefix.length);
+      product.image = `${backendUrl}/images/${filename}`;
+      await product.save();
+      updatedCount += 1;
+    }
+
+    res.json({
+      success: true,
+      updatedCount,
+    });
+  } catch (error) {
+    console.error("Fix product images error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fix product images",
+    });
+  }
+});
+
 //creating middleware to fetch user
 
 const fetchUser = async (req, res, next)=>{
