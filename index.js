@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
+const { seedProducts } = require("./seedProducts");
 // const { type } = require("os");
 
 const mongoUri = process.env.MONGODB_URI;
@@ -317,6 +318,26 @@ app.get('/popularinwomen', async(req, res)=>{
     });
   }
 })
+
+app.post("/seedproducts", async (req, res) => {
+  if (!ensureDatabaseConnection(res)) {
+    return;
+  }
+
+  try {
+    const seededCount = await seedProducts();
+    res.json({
+      success: true,
+      seededCount,
+    });
+  } catch (error) {
+    console.error("Seed products error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to seed products",
+    });
+  }
+});
 
 //creating middleware to fetch user
 
